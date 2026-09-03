@@ -1,0 +1,17 @@
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# SwiftPM
+.build/
+
+# Prebuilt binaries copied in by scripts/build-universal.sh
+packages/*/bin/
+
+# npm/pnpm
+*.tgz
+.npm
+
+# OS
+.DS_Store

@@ -1,0 +1,27 @@
+{
+  "name": "swiftx",
+  "version": "0.0.0",
+  "private": true,
+  "description": "macOS Swift capabilities packaged for Node consumers",
+  "author": "eunsoo",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cbcruk/swiftx"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "build:swift": "swift build -c release --package-path swift/core"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "pnpm@11.22.0"
+}

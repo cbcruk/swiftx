@@ -1,0 +1,39 @@
+{
+  "name": "@cbcruk/swift-bridge",
+  "version": "0.1.0",
+  "description": "Node <-> macOS Swift CLI bridge: process execution, JSON stdio contracts, and binary resolution",
+  "author": "eunsoo",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cbcruk/swiftx",
+    "directory": "packages/swift-bridge"
+  },
+  "keywords": ["swift", "macos", "cli", "bridge", "subprocess"],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm build && node --test test/*.test.mjs",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
