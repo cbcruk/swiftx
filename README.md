@@ -1,9 +1,34 @@
 # swiftx
 
 macOS 프레임워크(Vision, PDFKit, Translation, …)를 감싼 Swift CLI들과, 그것을 Node에서
-쓰기 위한 브릿지를 한 곳에 모은 모노레포. 각 기능은 npm 패키지로 배포되어
+쓰기 위한 브릿지를 한 곳에 모은 모노레포. 각 기능은 npm 패키지 형태로 묶여
+[GitHub 릴리스](https://github.com/cbcruk/swiftx/releases)에 올라가고,
 [vision-ocr](https://github.com/cbcruk/vision-ocr), [pdf-translator](https://github.com/cbcruk/pdf-translator)
-같은 소비 프로젝트에서 `install` 후 바로 쓰인다.
+같은 소비 프로젝트가 URL로 설치해 바로 쓴다.
+
+## 설치
+
+릴리스에 붙은 tarball을 URL로 건다. 미리 빌드된 유니버설 바이너리가 들어 있어
+설치 시점에 Swift 툴체인이 필요 없다. 최신 URL은 릴리스 노트에 그대로 들어 있다.
+
+```json
+{
+  "dependencies": {
+    "@cbcruk/vision-ocr": "https://github.com/cbcruk/swiftx/releases/download/<tag>/cbcruk-vision-ocr-2.0.0.tgz"
+  },
+  "pnpm": {
+    "overrides": {
+      "@cbcruk/swift-bridge": "https://github.com/cbcruk/swiftx/releases/download/<tag>/cbcruk-swift-bridge-0.1.0.tgz"
+    }
+  }
+}
+```
+
+`overrides`가 필요한 이유는 래퍼 패키지가 `@cbcruk/swift-bridge`를 `^0.1.0`으로 요구하는데
+그 이름이 npm 레지스트리에 없기 때문이다. 없으면 설치가 404로 죽는다. 이렇게 고정하면
+브릿지 사본이 하나로 모여서 `instanceof SwiftCliError`가 패키지 경계를 넘어서도 성립한다.
+
+npm을 쓰는 소비자는 `pnpm.overrides` 대신 최상위 `overrides`에 같은 줄을 넣는다.
 
 ## 연결 방식
 
@@ -55,6 +80,7 @@ packages/
 scripts/
   build-universal.sh   arm64+x86_64 유니버설 바이너리를 만들어 npm 패키지에 동봉
   check-bundled-binary.mjs  바이너리 없이 배포되는 사고를 막는 prepack 검사
+  release-notes.mjs    릴리스 본문(설치 스니펫)을 tarball 목록에서 만들어 낸다
 ```
 
 ### macOS 하한
@@ -79,8 +105,10 @@ pnpm build:swift             # SwiftXKit 컴파일 확인 (macOS 필요)
 pnpm --filter @cbcruk/pdf-cli build:swift        # 유니버설 바이너리 → packages/pdf-cli/bin
 ```
 
-배포는 `Release` 워크플로(workflow_dispatch)에서 패키지를 골라 돌린다. macOS 러너에서
-바이너리를 만들고, `prepack`이 동봉 여부를 확인한 뒤 npm에 올린다.
+배포는 `Release` 워크플로(workflow_dispatch)에 태그를 주고 돌린다. macOS 러너에서
+바이너리를 만들고, `prepack`이 동봉 여부를 확인한 뒤 네 패키지를 한꺼번에 pack해서
+그 태그의 GitHub 릴리스에 붙인다. 패키지끼리 물려 있어 따로 내보내면 버전이 어긋난다.
+릴리스 본문의 설치 스니펫은 `scripts/release-notes.mjs`가 만든다.
 
 개발 중에는 `.build/`의 산출물이 패키지 동봉본보다 우선한다. 특정 바이너리를 강제하려면
 `SWIFTX_<NAME>_BIN`(예: `SWIFTX_PDF_CLI_BIN`)에 절대 경로를 준다.

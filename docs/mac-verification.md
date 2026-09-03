@@ -150,8 +150,17 @@ pdf-cli · translate-cli · vision-ocr 셋 다 `x86_64 arm64` 유니버설로 �
 tarball을 임시 디렉터리에 설치해 소비자 입장에서도 확인했다 — 동봉 바이너리 탐색,
 `vision-ocr` 실행 파일, 파일·버퍼·클립보드 세 입력 경로가 모두 동작한다.
 
-- 배포는 `Release` 워크플로(workflow_dispatch)에서 패키지를 골라 돌린다.
-  `NPM_TOKEN` 시크릿이 필요하다.
+`github:cbcruk/swiftx#path:/packages/vision-ocr` 형태의 git 의존성은 쓰지 않는다.
+pnpm이 문법은 받아주지만 `bin/`과 `dist/`가 gitignore라 tarball에 없고, 채우려면
+소비 측에 Swift 툴체인을 요구하게 된다 — node-swift를 버린 이유가 다시 돌아온다.
+
+- 배포는 `Release` 워크플로(workflow_dispatch)에 태그를 주고 돌린다. 네 패키지를 한꺼번에
+  pack해서 그 태그의 GitHub 릴리스에 붙인다. npm에 올리지 않으므로 토큰 시크릿은 필요 없고,
+  워크플로의 `contents: write` 권한으로 충분하다.
+- 소비 측 설치까지 로컬에서 확인했다. tarball 넷을 받아 `@cbcruk/swift-bridge`를
+  `overrides`로 고정하면 브릿지 사본이 하나로 모이고, 다른 패키지가 던진 오류에도
+  `instanceof SwiftCliError`가 성립한다. override 없이 설치하면
+  `ERR_PNPM_FETCH_404`로 죽는다 — 레지스트리에 없는 이름이라 그렇다.
 - `@cbcruk/vision-ocr`은 **2.0.0**이다. 1.x는 node-swift 애드온이라 실행 모델이 다르다.
 
 ## 픽스처 만들기

@@ -1,24 +1,21 @@
 name: Release
 
+# npm이 아니라 GitHub 릴리스에 tarball을 붙인다. 소비 측은 URL로 설치하고,
+# 미리 빌드된 유니버설 바이너리를 그대로 받으므로 Swift 툴체인이 필요 없다.
 on:
   workflow_dispatch:
     inputs:
-      package:
-        description: 배포할 패키지
+      tag:
+        description: 릴리스 태그 (예 2026.09.03). 이미 있는 태그면 실패한다
         required: true
-        type: choice
-        options:
-          - swift-bridge
-          - pdf-cli
-          - translate-cli
-          - vision-ocr
+        type: string
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  publish:
-    # 바이너리를 동봉해야 하므로 배포는 macOS에서만 한다.
+  release:
+    # 바이너리를 동봉해야 하므로 릴리스는 macOS에서만 만든다.
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
@@ -27,20 +24,37 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          registry-url: https://registry.npmjs.org
 
       - run: pnpm install --frozen-lockfile
+      - run: pnpm build
 
-      - name: Build TypeScript
-        run: pnpm --filter @cbcruk/${{ inputs.package }} build
+      - name: Build universal binaries
+        run: |
+          pnpm --filter @cbcruk/pdf-cli build:swift
+          pnpm --filter @cbcruk/translate-cli build:swift
+          pnpm --filter @cbcruk/vision-ocr build:swift
 
-      - name: Build universal binary
-        if: inputs.package != 'swift-bridge'
-        run: pnpm --filter @cbcruk/${{ inputs.package }} build:swift
+      # prepack 훅이 패키지마다 동봉 바이너리 유무를 다시 확인한다.
+      # pnpm pack이 workspace: 의존성을 실제 버전 범위로 바꿔 쓴다.
+      - name: Pack
+        run: |
+          mkdir -p tarballs
+          for package in swift-bridge pdf-cli translate-cli vision-ocr; do
+            pnpm --filter "@cbcruk/${package}" pack --pack-destination "${PWD}/tarballs"
+          done
+          ls -l tarballs
 
-      # prepack 훅이 동봉 바이너리 유무를 다시 확인한 뒤 배포한다.
-      # pnpm publish가 workspace: 의존성을 실제 버전으로 바꿔 쓴다.
-      - name: Publish
-        run: pnpm --filter @cbcruk/${{ inputs.package }} publish --access public --no-git-checks
+      - name: Compose release notes
+        run: |
+          node scripts/release-notes.mjs tarballs \
+            "${{ github.server_url }}/${{ github.repository }}/releases/download/${{ inputs.tag }}" \
+            > release-notes.md
+
+      - name: Create release
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ inputs.tag }}" tarballs/*.tgz \
+            --target "${{ github.sha }}" \
+            --title "${{ inputs.tag }}" \
+            --notes-file release-notes.md
