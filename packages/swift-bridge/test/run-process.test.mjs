@@ -182,3 +182,36 @@ test('stderr의 <tool>: 접두사는 메시지에서 중복되지 않는다', as
     }
   )
 })
+
+test('프레임워크 노이즈가 먼저 와도 CLI 자신의 줄을 원인으로 고른다', async () => {
+  // CoreGraphics/PDFKit이 같은 stderr에 먼저 쓰는 실제 상황을 재현한다.
+  const tool = process.execPath
+  const name = tool.split('/').pop()
+  const noise = 'CoreGraphics PDF has logged an error. Set environment variable ...'
+
+  await assert.rejects(
+    () =>
+      runChecked(
+        tool,
+        nodeArgs(
+          `process.stderr.write("${noise}\\n${name}: cannot open PDF: /tmp/x.pdf\\n"); process.exit(2)`
+        )
+      ),
+    (error) => {
+      assert.equal(error.message, `${name} exited with code 2: cannot open PDF: /tmp/x.pdf`)
+      // 원문은 그대로 남아 있어야 진단이 가능하다.
+      assert.match(error.stderr, /CoreGraphics/)
+      return true
+    }
+  )
+})
+
+test('CLI 자신의 줄이 없으면 첫 줄로 물러선다', async () => {
+  await assert.rejects(
+    () => runChecked(process.execPath, nodeArgs('process.stderr.write("dyld: boom\\n"); process.exit(9)')),
+    (error) => {
+      assert.match(error.message, /exited with code 9: dyld: boom$/)
+      return true
+    }
+  )
+})

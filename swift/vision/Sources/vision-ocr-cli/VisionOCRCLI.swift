@@ -2,6 +2,7 @@ import AppKit
 import CoreGraphics
 import Foundation
 import SwiftXKit
+import VisionOCRKit
 
 extension ExitCode {
     /// 클립보드에 이미지가 없다. 사용자가 바로 고칠 수 있는 실패라 따로 구분한다.

@@ -34,18 +34,36 @@ export class SwiftCliError extends Error {
   }
 }
 
-/**
- * stderr 첫 줄까지 붙여 "무엇이 왜 실패했는지"가 한 줄로 보이게 만든다.
- *
- * Swift 쪽 `fail`은 사람이 터미널에서 직접 실행할 때를 위해 `<tool>: `를 앞에 붙인다.
- * 여기서는 도구 이름을 이미 쓰고 있으므로 그 접두사를 떼어 중복을 없앤다.
- */
+/** 실패 원인 한 줄을 붙여 "무엇이 왜 실패했는지"가 한 줄로 보이게 만든다. */
 function defaultMessage(info: SwiftCliErrorInfo): string {
   const tool = path.basename(info.command)
-  const firstLine = info.stderr.trim().split('\n')[0] ?? ''
-  const detail = firstLine.startsWith(`${tool}: `) ? firstLine.slice(tool.length + 2) : firstLine
+  const detail = failureLine(info.stderr, tool)
   const suffix = detail === '' ? '' : `: ${detail}`
   return `${tool} exited with code ${info.exitCode}${suffix}`
+}
+
+/**
+ * stderr에서 실패 원인 줄을 고른다.
+ *
+ * "첫 줄"만 보면 안 되는 이유는, Apple 프레임워크가 같은 stderr에 자기 진단을 먼저
+ * 흘리기 때문이다. 예를 들어 깨진 PDF를 열면 CoreGraphics가
+ * `CoreGraphics PDF has logged an error…`를 먼저 쓰고, 진짜 원인인
+ * `pdf-cli: cannot open PDF: …`는 그 다음 줄에 온다.
+ *
+ * swiftx CLI는 원인을 `<tool>: `로 시작하는 줄에 쓰기로 약속했으므로(Swift 쪽 `fail`)
+ * 그 줄을 먼저 찾고, 없을 때만 첫 비어 있지 않은 줄로 물러선다. 도구 이름은 메시지
+ * 앞에 이미 쓰고 있으므로 접두사는 떼어낸다.
+ */
+function failureLine(stderr: string, tool: string): string {
+  const lines = stderr
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line !== '')
+
+  const prefix = `${tool}: `
+  const own = lines.find((line) => line.startsWith(prefix))
+
+  return own === undefined ? (lines[0] ?? '') : own.slice(prefix.length)
 }
 
 /**
