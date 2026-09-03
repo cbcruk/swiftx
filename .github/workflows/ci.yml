@@ -30,3 +30,4 @@ jobs:
       - run: swift build -c release --package-path swift/core
       - run: swift build -c release --package-path swift/pdf
       - run: swift build -c release --package-path swift/translate
+      - run: swift build -c release --package-path swift/vision

@@ -39,10 +39,12 @@ swift/
   core/                SwiftXKit — 종료 코드, JSON 출력, 인자 파서, 좌표/이미지 유틸 (macOS 13)
   pdf/                 pdf-cli — PDFKit 추출, Vision 구조 인식, 리플로우 렌더 (macOS 26)
   translate/           translate-cli — Apple on-device 번역 (macOS 26)
+  vision/              vision-ocr-cli — Vision 텍스트 인식 (macOS 13)
 packages/
   swift-bridge/        @cbcruk/swift-bridge — 실행, JSON 파싱, 바이너리 탐색
   pdf-cli/             @cbcruk/pdf-cli — 타입 붙은 pdf-cli 래퍼 + 동봉 바이너리
   translate-cli/       @cbcruk/translate-cli — 청크 분할·순서 보정을 포함한 번역 래퍼
+  vision-ocr/          @cbcruk/vision-ocr — OCR 래퍼 + 사람용 vision-ocr 명령
 scripts/
   build-universal.sh   arm64+x86_64 유니버설 바이너리를 만들어 npm 패키지에 동봉
   check-bundled-binary.mjs  바이너리 없이 배포되는 사고를 막는 prepack 검사
@@ -57,7 +59,7 @@ SwiftPM의 `platforms:`는 패키지 단위라 하한이 섞이면 전체가 위
 |---|---|---|
 | `swift/core` (SwiftXKit) | macOS 13 | 공용 코드. 가장 낮은 소비자에 맞춘다 |
 | `swift/pdf`, `swift/translate` | macOS 26 | `RecognizeDocumentsRequest`, `TranslationSession` |
-| `swift/vision` *(예정)* | macOS 13 | `VNRecognizeTextRequest` |
+| `swift/vision` | macOS 13 | `VNRecognizeTextRequest` |
 
 ## 개발
 
@@ -80,7 +82,7 @@ pnpm --filter @cbcruk/pdf-cli build:swift        # 유니버설 바이너리 →
 
 - [x] **1단계** — 모노레포 스캐폴딩, `SwiftXKit`, `@cbcruk/swift-bridge`
 - [x] **2단계** — `pdf-cli` · `translate-cli` 이관(히스토리 보존), 래퍼 패키지, 배포 파이프라인
-- [ ] **3단계** — vision-ocr을 CLI 방식으로 전환해 이관 (node-swift 경로 폐기)
-- [ ] pdf-translator를 `@cbcruk/pdf-cli` · `@cbcruk/translate-cli` 소비로 전환
+- [x] **3단계** — vision-ocr을 CLI 방식으로 전환해 이관 (node-swift 경로 폐기)
+- [ ] 소비 프로젝트 전환 — pdf-translator, vision-ocr 리포
 
 이관은 `git subtree`로 커밋 히스토리를 보존해 가져온다.

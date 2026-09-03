@@ -50,6 +50,19 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2
 
+  packages/vision-ocr:
+    dependencies:
+      '@cbcruk/swift-bridge':
+        specifier: workspace:^
+        version: link:../swift-bridge
+    devDependencies:
+      '@types/node':
+        specifier: ^26.1.1
+        version: 26.4.1
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+
 packages:
 
   '@types/node@26.4.1':

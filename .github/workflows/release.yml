@@ -11,6 +11,7 @@ on:
           - swift-bridge
           - pdf-cli
           - translate-cli
+          - vision-ocr
 
 permissions:
   contents: read

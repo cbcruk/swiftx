@@ -1,0 +1,49 @@
+{
+  "name": "@cbcruk/vision-ocr",
+  "version": "2.0.0",
+  "description": "Extract text from images using the macOS Vision framework, as a prebuilt binary",
+  "author": "eunsoo",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cbcruk/swiftx",
+    "directory": "packages/vision-ocr"
+  },
+  "keywords": ["ocr", "vision", "macos", "swift", "text-recognition"],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "vision-ocr": "./dist/cli.js",
+    "vision-ocr-cli": "./bin/vision-ocr-cli"
+  },
+  "files": ["dist", "bin", "README.md"],
+  "scripts": {
+    "build": "tsc",
+    "build:swift": "../../scripts/build-universal.sh ../../swift/vision vision-ocr-cli ./bin",
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm build && node --test test/*.test.mjs",
+    "prepack": "node ../../scripts/check-bundled-binary.mjs . vision-ocr-cli",
+    "clean": "rm -rf dist bin *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@cbcruk/swift-bridge": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2"
+  },
+  "os": ["darwin"],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
