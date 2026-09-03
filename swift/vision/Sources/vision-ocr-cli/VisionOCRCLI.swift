@@ -43,7 +43,11 @@ struct VisionOCRCLI {
 
         let image: CGImage
         do {
-            image = try loadImage(from: resolveSource(path, useClipboard, useStandardInput))
+            // 투명 배경은 Vision이 사실상 읽지 못한다. 빈 결과로 조용히 끝나는 대신
+            // 흰 배경을 깔고 인식한다.
+            image = flattenTransparency(
+                try loadImage(from: resolveSource(path, useClipboard, useStandardInput))
+            )
         } catch let error as ImageLoadingError {
             fail("\(error)", .input)
         } catch {

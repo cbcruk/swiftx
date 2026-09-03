@@ -50,9 +50,14 @@ const text = recognizeText(pngBytes)
 `options`: `languages`, `binary`, `timeoutMs`, `signal`.
 
 Recognizing nothing is **not** an error — you get an empty result. Text fragments are sorted
-top-to-bottom, left-to-right and merged into lines, which is a deliberately simple model:
-multi-column pages and tables will not survive it. For document structure (titles, paragraphs,
-tables with cells), use [`@cbcruk/pdf-cli`](../pdf-cli)'s `readStructure`.
+top-to-bottom, merged into lines (the tolerance scales with glyph height), and read
+left-to-right within each line. That is a deliberately simple model: multi-column pages will be
+stitched across columns. For document structure (titles, paragraphs, tables with cells), use
+[`@cbcruk/pdf-cli`](../pdf-cli)'s `readStructure`.
+
+Images with an alpha channel are composited onto **white** before recognition — Vision reads
+almost nothing off a transparent background, and PDF exports and screenshots hit this often.
+White text on a transparent background is the case this assumption gets wrong.
 
 Failures throw `SwiftCliError` from `@cbcruk/swift-bridge` with the CLI's exit code: `1` usage,
 `2` cannot read or decode the image, `4` recognition failure, `5` no image in the clipboard

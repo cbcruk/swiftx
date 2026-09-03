@@ -70,7 +70,7 @@ export interface StructuredPage {
   index: number
   width: number
   height: number
-  /** 페이지 제목으로 감지된 텍스트 (없으면 null). */
+  /** 페이지 제목으로 감지된 텍스트. 감지되지 않으면 `null`이며, 키는 항상 존재한다. */
   title: string | null
   paragraphs: StructuredParagraph[]
   tables: StructuredTable[]

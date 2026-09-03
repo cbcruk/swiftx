@@ -44,6 +44,9 @@ const { output, pageCount } = await renderPdf(
 
 Coordinates follow the PDF convention: **bottom-left origin**, y grows upward.
 
+Every field in the schema is always present: a page with no detected title has
+`title: null`, not a missing key.
+
 Every function accepts `binary`, `timeoutMs` and `signal`.
 
 ## Errors
