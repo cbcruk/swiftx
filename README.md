@@ -85,6 +85,11 @@ pnpm --filter @cbcruk/pdf-cli build:swift        # 유니버설 바이너리 →
 개발 중에는 `.build/`의 산출물이 패키지 동봉본보다 우선한다. 특정 바이너리를 강제하려면
 `SWIFTX_<NAME>_BIN`(예: `SWIFTX_PDF_CLI_BIN`)에 절대 경로를 준다.
 
+## 맥에서 확인할 것
+
+Swift 코드가 툴체인 없는 환경에서 작성되는 동안 쌓인 미검증 항목과, 실제 문서로만
+확인할 수 있는 것들을 [docs/mac-verification.md](docs/mac-verification.md)에 모아 두었다.
+
 ## 진행 상황
 
 - [x] **1단계** — 모노레포 스캐폴딩, `SwiftXKit`, `@cbcruk/swift-bridge`
