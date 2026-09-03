@@ -28,7 +28,6 @@ const packages = ['swift-bridge', 'pdf-cli', 'translate-cli', 'vision-ocr'].map(
 })
 
 const url = (name) => packages.find((entry) => entry.name === name).url
-const consumers = packages.filter((entry) => entry.name !== BRIDGE)
 
 console.log(`미리 빌드된 유니버설 바이너리(arm64 + x86_64)를 동봉한 tarball이다.
 설치 시점에 Swift 툴체인이 필요하지 않다.
@@ -40,7 +39,7 @@ console.log(`미리 빌드된 유니버설 바이너리(arm64 + x86_64)를 동�
 \`\`\`json
 {
   "dependencies": {
-${consumers.map((entry) => `    "${entry.name}": "${entry.url}"`).join(',\n')}
+${packages.map((entry) => `    "${entry.name}": "${entry.url}"`).join(',\n')}
   },
   "pnpm": {
     "overrides": {
@@ -52,12 +51,16 @@ ${consumers.map((entry) => `    "${entry.name}": "${entry.url}"`).join(',\n')}
 
 npm을 쓴다면 \`pnpm.overrides\` 대신 최상위 \`overrides\`에 같은 줄을 넣는다.
 
-## overrides가 필요한 이유
+## swift-bridge가 두 번 나오는 이유
 
 래퍼 패키지들은 \`${BRIDGE}\`를 \`^0.1.0\`으로 요구한다. npm 레지스트리에 없는
-패키지라 그대로 두면 설치가 404로 죽는다. override로 이 릴리스의 tarball에 고정하면
-해결되고, 동시에 사본이 하나로 모여 \`instanceof SwiftCliError\`가 패키지 경계를
+이름이라 override 없이는 설치가 404로 죽는다. override는 그걸 이 릴리스의 tarball로
+고정하고, 덕분에 사본이 하나로 모여 \`instanceof SwiftCliError\`가 패키지 경계를
 넘어서도 성립한다.
+
+\`dependencies\` 쪽 한 줄은 별개다. override만으로는 브릿지가 최상위
+\`node_modules\`에 노출되지 않아서, \`SwiftCliError\`를 직접 import하려면
+의존성으로도 선언해야 한다. 오류를 종료 코드로 가르지 않는다면 빼도 된다.
 
 ## macOS 하한
 
