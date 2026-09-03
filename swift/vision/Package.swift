@@ -15,7 +15,7 @@ let package = Package(
         .executableTarget(
             name: "vision-ocr-cli",
             dependencies: [
-                .product(name: "SwiftXKit", package: "swiftx-core")
+                .product(name: "SwiftXKit", package: "core")
             ],
             path: "Sources/vision-ocr-cli"
         )

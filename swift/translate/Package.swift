@@ -14,7 +14,7 @@ let package = Package(
         .executableTarget(
             name: "translate-cli",
             dependencies: [
-                .product(name: "SwiftXKit", package: "swiftx-core")
+                .product(name: "SwiftXKit", package: "core")
             ],
             path: "Sources/translate-cli"
         )

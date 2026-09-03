@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import test, { after, beforeEach } from 'node:test'
@@ -82,8 +82,17 @@ test('그 밖의 실패는 OCR failed로 감싸 알린다', async () => {
 })
 
 test('클립보드 복사가 실패해도 결과와 종료 코드는 유지된다', async () => {
-  // 이 환경에는 pbcopy가 없다. 그 실패가 명령 전체를 실패시키면 안 된다.
-  const result = await runCli(['shot.png'])
+  // 이 패키지는 os: ["darwin"]이라 실행 환경에는 pbcopy가 항상 있다.
+  // 반드시 실패하는 스텁을 PATH 앞에 끼워 "복사 실패"를 결정론적으로 만든다.
+  const stubDir = mkdtempSync(path.join(os.tmpdir(), 'swiftx-pbcopy-'))
+  after(() => rmSync(stubDir, { recursive: true, force: true }))
+  const stub = path.join(stubDir, 'pbcopy')
+  writeFileSync(stub, '#!/bin/sh\nexit 1\n')
+  chmodSync(stub, 0o755)
+
+  const result = await runCli(['shot.png'], {
+    PATH: `${stubDir}${path.delimiter}${process.env.PATH ?? ''}`,
+  })
 
   assert.equal(result.exitCode, 0)
   assert.equal(result.stdout, '첫 줄\nsecond line\n')

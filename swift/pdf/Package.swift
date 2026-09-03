@@ -15,7 +15,7 @@ let package = Package(
         .executableTarget(
             name: "pdf-cli",
             dependencies: [
-                .product(name: "SwiftXKit", package: "swiftx-core")
+                .product(name: "SwiftXKit", package: "core")
             ],
             path: "Sources/pdf-cli"
         )
