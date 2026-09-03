@@ -168,3 +168,17 @@ test('runCheckedSync도 SwiftCliError를 던진다', () => {
 test('존재하지 않는 바이너리는 스폰 에러로 reject된다', async () => {
   await assert.rejects(() => runProcess('/nonexistent/swiftx-binary', []), { code: 'ENOENT' })
 })
+
+test('stderr의 <tool>: 접두사는 메시지에서 중복되지 않는다', async () => {
+  const tool = process.execPath
+  const name = tool.split('/').pop()
+
+  await assert.rejects(
+    () =>
+      runChecked(tool, nodeArgs(`process.stderr.write("${name}: cannot open PDF\\n"); process.exit(2)`)),
+    (error) => {
+      assert.equal(error.message, `${name} exited with code 2: cannot open PDF`)
+      return true
+    }
+  )
+})

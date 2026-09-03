@@ -34,11 +34,17 @@ export class SwiftCliError extends Error {
   }
 }
 
-/** stderr 첫 줄까지 붙여 "무엇이 왜 실패했는지"가 한 줄로 보이게 만든다. */
+/**
+ * stderr 첫 줄까지 붙여 "무엇이 왜 실패했는지"가 한 줄로 보이게 만든다.
+ *
+ * Swift 쪽 `fail`은 사람이 터미널에서 직접 실행할 때를 위해 `<tool>: `를 앞에 붙인다.
+ * 여기서는 도구 이름을 이미 쓰고 있으므로 그 접두사를 떼어 중복을 없앤다.
+ */
 function defaultMessage(info: SwiftCliErrorInfo): string {
   const tool = path.basename(info.command)
-  const detail = info.stderr.trim().split('\n')[0]
-  const suffix = detail === undefined || detail === '' ? '' : `: ${detail}`
+  const firstLine = info.stderr.trim().split('\n')[0] ?? ''
+  const detail = firstLine.startsWith(`${tool}: `) ? firstLine.slice(tool.length + 2) : firstLine
+  const suffix = detail === '' ? '' : `: ${detail}`
   return `${tool} exited with code ${info.exitCode}${suffix}`
 }
 

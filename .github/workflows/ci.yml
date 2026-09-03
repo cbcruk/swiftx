@@ -7,7 +7,7 @@ on:
 
 jobs:
   node:
-    name: node (bridge)
+    name: node
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,9 +20,13 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
 
-  swift-core:
-    name: swift (SwiftXKit)
-    runs-on: macos-latest
+  swift:
+    name: swift
+    # pdf-cli/translate-cli가 macOS 26 API(RecognizeDocumentsRequest, TranslationSession)를
+    # 쓰므로 macos-26이 필요하다. 이 이미지는 arm64 전용이다.
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
       - run: swift build -c release --package-path swift/core
+      - run: swift build -c release --package-path swift/pdf
+      - run: swift build -c release --package-path swift/translate

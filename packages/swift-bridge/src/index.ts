@@ -6,6 +6,8 @@ export {
   type SwiftCliErrorInfo,
 } from './errors.js'
 
+export { SwiftExitCode } from './exit-code.js'
+
 export {
   ensureSuccess,
   runChecked,

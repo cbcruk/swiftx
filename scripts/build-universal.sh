@@ -5,6 +5,9 @@
 #   scripts/build-universal.sh <swift-package-dir> <binary-name> <output-dir>
 #   scripts/build-universal.sh swift/pdf pdf-cli packages/pdf-cli/bin
 #
+# ARCHS로 대상 아키텍처를 바꿀 수 있다 (기본 "arm64 x86_64"). macOS 26만 지원하는
+# CLI라면 Intel 슬라이스가 무의미하므로 ARCHS=arm64로 줄여도 된다.
+#
 # 소비자 쪽에 Swift 툴체인을 요구하지 않기 위해, 배포 tarball에는 소스가 아니라
 # 이 스크립트가 만든 바이너리가 들어간다.
 set -euo pipefail
@@ -24,7 +27,7 @@ binary_name="$2"
 output_dir="$3"
 
 slices=()
-for arch in arm64 x86_64; do
+for arch in ${ARCHS:-arm64 x86_64}; do
   echo "==> building ${binary_name} (${arch})"
   swift build -c release --package-path "$package_dir" --arch "$arch"
 

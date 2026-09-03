@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import PDFKit
+import SwiftXKit
 
 struct InfoResult: Encodable {
     let pageCount: Int
@@ -31,11 +32,11 @@ struct ExtractResult: Encodable {
 
 private func openDocument(_ args: [String]) -> PDFDocument {
     guard let path = args.first else {
-        fail("expected a PDF path argument", 1)
+        fail("expected a PDF path argument", .usage)
     }
     let url = URL(fileURLWithPath: path)
     guard let document = PDFDocument(url: url) else {
-        fail("cannot open PDF: \(path)", 2)
+        fail("cannot open PDF: \(path)", .input)
     }
     return document
 }
@@ -49,7 +50,7 @@ func runInfo(_ args: [String]) {
         characterCount += text.trimmingCharacters(in: .whitespacesAndNewlines).count
     }
     printJSON(InfoResult(pageCount: document.pageCount, hasTextLayer: characterCount > 50))
-    exit(0)
+    exit(ExitCode.ok.rawValue)
 }
 
 func runExtract(_ args: [String]) {
@@ -69,7 +70,7 @@ func runExtract(_ args: [String]) {
         ))
     }
     printJSON(ExtractResult(pageCount: document.pageCount, pages: pages))
-    exit(0)
+    exit(ExitCode.ok.rawValue)
 }
 
 private func extractLines(from page: PDFPage) -> [ExtractedLine] {

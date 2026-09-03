@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 배포할 패키지
+        required: true
+        type: choice
+        options:
+          - swift-bridge
+          - pdf-cli
+          - translate-cli
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    # 바이너리를 동봉해야 하므로 배포는 macOS에서만 한다.
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build TypeScript
+        run: pnpm --filter @cbcruk/${{ inputs.package }} build
+
+      - name: Build universal binary
+        if: inputs.package != 'swift-bridge'
+        run: pnpm --filter @cbcruk/${{ inputs.package }} build:swift
+
+      # prepack 훅이 동봉 바이너리 유무를 다시 확인한 뒤 배포한다.
+      # pnpm publish가 workspace: 의존성을 실제 버전으로 바꿔 쓴다.
+      - name: Publish
+        run: pnpm --filter @cbcruk/${{ inputs.package }} publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

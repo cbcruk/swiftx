@@ -1,0 +1,48 @@
+{
+  "name": "@cbcruk/pdf-cli",
+  "version": "0.1.0",
+  "description": "PDFKit + Vision document structure for Node, as a prebuilt macOS binary",
+  "author": "eunsoo",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cbcruk/swiftx",
+    "directory": "packages/pdf-cli"
+  },
+  "keywords": ["pdf", "pdfkit", "vision", "macos", "swift", "ocr"],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "pdf-cli": "./bin/pdf-cli"
+  },
+  "files": ["dist", "bin", "README.md"],
+  "scripts": {
+    "build": "tsc",
+    "build:swift": "../../scripts/build-universal.sh ../../swift/pdf pdf-cli ./bin",
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm build && node --test test/*.test.mjs",
+    "prepack": "node ../../scripts/check-bundled-binary.mjs . pdf-cli",
+    "clean": "rm -rf dist bin *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@cbcruk/swift-bridge": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2"
+  },
+  "os": ["darwin"],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

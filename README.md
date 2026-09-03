@@ -26,7 +26,7 @@ in-process 네이티브 애드온(node-swift)을 쓰지 않는 이유:
 |---|---|
 | 성공 출력 | stdout에 한 줄짜리 JSON. 스트리밍이면 한 줄에 객체 하나(NDJSON) |
 | 진단 출력 | stderr **첫 줄**에 실패 원인 한 줄 (브릿지가 에러 메시지로 그대로 쓴다) |
-| 종료 코드 | `0` 성공 · `1` 사용 오류 · `2` 입력 오류 · `3` 기능 사용 불가 · `4` 실행 실패 |
+| 종료 코드 | `0` 성공 · `1` 사용 오류 · `2` 입력 오류 · `3` 기능 사용 불가 · `4` 실행 실패 · `5`~ CLI 고유 |
 | 입력 | 파일 경로는 인자로, 대량 텍스트는 stdin으로 |
 
 종료 코드가 부족하면 각 CLI가 `ExitCode`에 자기 코드를 덧붙이고, Node 쪽에서
@@ -37,10 +37,15 @@ in-process 네이티브 애드온(node-swift)을 쓰지 않는 이유:
 ```
 swift/
   core/                SwiftXKit — 종료 코드, JSON 출력, 인자 파서, 좌표/이미지 유틸 (macOS 13)
+  pdf/                 pdf-cli — PDFKit 추출, Vision 구조 인식, 리플로우 렌더 (macOS 26)
+  translate/           translate-cli — Apple on-device 번역 (macOS 26)
 packages/
   swift-bridge/        @cbcruk/swift-bridge — 실행, JSON 파싱, 바이너리 탐색
+  pdf-cli/             @cbcruk/pdf-cli — 타입 붙은 pdf-cli 래퍼 + 동봉 바이너리
+  translate-cli/       @cbcruk/translate-cli — 청크 분할·순서 보정을 포함한 번역 래퍼
 scripts/
   build-universal.sh   arm64+x86_64 유니버설 바이너리를 만들어 npm 패키지에 동봉
+  check-bundled-binary.mjs  바이너리 없이 배포되는 사고를 막는 prepack 검사
 ```
 
 ### macOS 하한
@@ -51,19 +56,22 @@ SwiftPM의 `platforms:`는 패키지 단위라 하한이 섞이면 전체가 위
 | Swift 패키지 | 하한 | 이유 |
 |---|---|---|
 | `swift/core` (SwiftXKit) | macOS 13 | 공용 코드. 가장 낮은 소비자에 맞춘다 |
+| `swift/pdf`, `swift/translate` | macOS 26 | `RecognizeDocumentsRequest`, `TranslationSession` |
 | `swift/vision` *(예정)* | macOS 13 | `VNRecognizeTextRequest` |
-| `swift/pdf`, `swift/translate` *(예정)* | macOS 26 | `RecognizeDocumentsRequest`, `TranslationSession` |
 
 ## 개발
 
 ```sh
 pnpm install
 pnpm typecheck
-pnpm test
+pnpm test                    # Swift CLI 계약을 흉내내는 대역으로 래퍼까지 검증한다
 
-pnpm build:swift                                   # SwiftXKit (macOS 필요)
-scripts/build-universal.sh swift/pdf pdf-cli packages/pdf-cli/bin
+pnpm build:swift             # SwiftXKit 컴파일 확인 (macOS 필요)
+pnpm --filter @cbcruk/pdf-cli build:swift        # 유니버설 바이너리 → packages/pdf-cli/bin
 ```
+
+배포는 `Release` 워크플로(workflow_dispatch)에서 패키지를 골라 돌린다. macOS 러너에서
+바이너리를 만들고, `prepack`이 동봉 여부를 확인한 뒤 npm에 올린다.
 
 개발 중에는 `.build/`의 산출물이 패키지 동봉본보다 우선한다. 특정 바이너리를 강제하려면
 `SWIFTX_<NAME>_BIN`(예: `SWIFTX_PDF_CLI_BIN`)에 절대 경로를 준다.
@@ -71,7 +79,8 @@ scripts/build-universal.sh swift/pdf pdf-cli packages/pdf-cli/bin
 ## 진행 상황
 
 - [x] **1단계** — 모노레포 스캐폴딩, `SwiftXKit`, `@cbcruk/swift-bridge`
-- [ ] **2단계** — `pdf-cli` · `translate-cli`를 pdf-translator에서 이관, 프리빌트 배포 파이프라인 검증
+- [x] **2단계** — `pdf-cli` · `translate-cli` 이관(히스토리 보존), 래퍼 패키지, 배포 파이프라인
 - [ ] **3단계** — vision-ocr을 CLI 방식으로 전환해 이관 (node-swift 경로 폐기)
+- [ ] pdf-translator를 `@cbcruk/pdf-cli` · `@cbcruk/translate-cli` 소비로 전환
 
 이관은 `git subtree`로 커밋 히스토리를 보존해 가져온다.

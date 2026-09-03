@@ -1,4 +1,5 @@
 import Foundation
+import SwiftXKit
 
 @main
 struct PDFCLI {
@@ -10,7 +11,7 @@ struct PDFCLI {
         var args = Array(CommandLine.arguments.dropFirst())
         guard args.isEmpty == false else {
             printUsage()
-            exit(1)
+            exit(ExitCode.usage.rawValue)
         }
         let command = args.removeFirst()
         switch command {
@@ -24,9 +25,9 @@ struct PDFCLI {
             await runStructure(args)
         case "--help", "-h":
             printUsage()
-            exit(0)
+            exit(ExitCode.ok.rawValue)
         default:
-            fail("unknown command: \(command)", 1)
+            fail("unknown command: \(command)", .usage)
         }
     }
 
@@ -45,20 +46,7 @@ struct PDFCLI {
                                  read {"blocks":[{"type":"heading"|"body","text"}]}
                                  from stdin and write a reflowed PDF
 
-        exit codes: 0 ok, 1 usage error, 2 cannot open/parse input, 3 render failure.
+        exit codes: 0 ok, 1 usage error, 2 cannot open/parse input, 4 execution failure.
         """)
     }
-}
-
-func fail(_ message: String, _ code: Int32) -> Never {
-    FileHandle.standardError.write(Data("pdf-cli: \(message)\n".utf8))
-    exit(code)
-}
-
-func printJSON(_ value: some Encodable) {
-    let encoder = JSONEncoder()
-    guard let data = try? encoder.encode(value), let text = String(data: data, encoding: .utf8) else {
-        fail("failed to encode output as JSON", 3)
-    }
-    print(text)
 }

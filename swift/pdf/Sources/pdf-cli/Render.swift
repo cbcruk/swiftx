@@ -1,6 +1,7 @@
 import AppKit
 import CoreText
 import Foundation
+import SwiftXKit
 
 struct RenderBlock: Decodable {
     let type: String
@@ -22,35 +23,34 @@ private let textInset = 64.0
 
 func runRender(_ args: [String]) {
     var outputPath: String?
-    var rest = ArraySlice(args)
-    while let arg = rest.popFirst() {
-        switch arg {
+    var reader = ArgumentReader(args)
+    while let argument = reader.next() {
+        switch argument {
         case "--output", "-o":
-            guard let value = rest.popFirst() else { fail("--output requires a value", 1) }
-            outputPath = value
+            outputPath = reader.value(for: argument)
         default:
-            fail("unknown argument: \(arg)", 1)
+            fail("unknown argument: \(argument)", .usage)
         }
     }
     guard let outputPath else {
-        fail("render requires --output <path>", 1)
+        fail("render requires --output <path>", .usage)
     }
 
     guard let data = try? FileHandle.standardInput.readToEnd(), !data.isEmpty else {
-        fail("expected render input JSON on stdin", 1)
+        fail("expected render input JSON on stdin", .usage)
     }
     guard let input = try? JSONDecoder().decode(RenderInput.self, from: data) else {
-        fail("stdin is not valid render input JSON", 1)
+        fail("stdin is not valid render input JSON", .usage)
     }
     guard !input.blocks.isEmpty else {
-        fail("render input has no blocks", 1)
+        fail("render input has no blocks", .usage)
     }
 
     let composer = PDFComposer(outputPath: outputPath)
     composer.compose(input.blocks)
     let pageCount = composer.finish()
     printJSON(RenderResult(output: outputPath, pageCount: pageCount))
-    exit(0)
+    exit(ExitCode.ok.rawValue)
 }
 
 // Apple SD Gothic Neo drops doubled Latin letters (e.g. "ll") when text is
@@ -80,13 +80,13 @@ private final class PDFComposer {
         guard let consumer = CGDataConsumer(url: URL(fileURLWithPath: outputPath) as CFURL),
               let context = CGContext(consumer: consumer, mediaBox: &mediaBox, nil)
         else {
-            fail("cannot create PDF at \(outputPath)", 3)
+            fail("cannot create PDF at \(outputPath)", .failure)
         }
         guard let body = makeFont(latin: "HelveticaNeue", korean: "AppleSDGothicNeo-Regular", size: 11),
               let heading = makeFont(latin: "HelveticaNeue-Bold", korean: "AppleSDGothicNeo-Bold", size: 16),
               let table = makeFont(latin: "HelveticaNeue", korean: "AppleSDGothicNeo-Regular", size: 9)
         else {
-            fail("required fonts are not available", 3)
+            fail("required fonts are not available", .failure)
         }
         self.context = context
         self.bodyFont = body

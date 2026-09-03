@@ -15,7 +15,33 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2
 
+  packages/pdf-cli:
+    dependencies:
+      '@cbcruk/swift-bridge':
+        specifier: workspace:^
+        version: link:../swift-bridge
+    devDependencies:
+      '@types/node':
+        specifier: ^26.1.1
+        version: 26.4.1
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+
   packages/swift-bridge:
+    devDependencies:
+      '@types/node':
+        specifier: ^26.1.1
+        version: 26.4.1
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+
+  packages/translate-cli:
+    dependencies:
+      '@cbcruk/swift-bridge':
+        specifier: workspace:^
+        version: link:../swift-bridge
     devDependencies:
       '@types/node':
         specifier: ^26.1.1

@@ -1,28 +1,22 @@
 import AppKit
 import Foundation
 import PDFKit
+import SwiftXKit
 import Vision
-
-struct StructuredBox: Encodable {
-    let x: Double
-    let y: Double
-    let width: Double
-    let height: Double
-}
 
 struct StructuredParagraph: Encodable {
     let text: String
-    let box: StructuredBox
+    let box: Box
     let lineCount: Int
 }
 
 struct StructuredTable: Encodable {
-    let box: StructuredBox
+    let box: Box
     let rows: [[String]]
 }
 
 struct StructuredList: Encodable {
-    let box: StructuredBox
+    let box: Box
     let items: [String]
 }
 
@@ -47,33 +41,24 @@ func runStructure(_ args: [String]) async {
     var scale = 3.0
     var pageFilter: Set<Int>?
 
-    var rest = ArraySlice(args)
-    while let arg = rest.popFirst() {
-        switch arg {
+    var reader = ArgumentReader(args)
+    while let argument = reader.next() {
+        switch argument {
         case "--pages":
-            guard let value = rest.popFirst() else { fail("--pages requires a value", 1) }
-            pageFilter = Set(value.split(separator: ",").compactMap { Int($0) })
+            pageFilter = Set(reader.listValue(for: argument).compactMap { Int($0) })
         case "--languages":
-            guard let value = rest.popFirst() else { fail("--languages requires a value", 1) }
-            languages = value.split(separator: ",").map(String.init)
+            languages = reader.listValue(for: argument)
         case "--scale":
-            guard let value = rest.popFirst(), let parsed = Double(value) else {
-                fail("--scale requires a number", 1)
-            }
-            scale = parsed
+            scale = reader.doubleValue(for: argument)
         default:
-            if path == nil, !arg.hasPrefix("-") {
-                path = arg
-            } else {
-                fail("unknown argument: \(arg)", 1)
-            }
+            reader.takePositional(argument, into: &path)
         }
     }
     guard let path else {
-        fail("expected a PDF path argument", 1)
+        fail("expected a PDF path argument", .usage)
     }
     guard let document = PDFDocument(url: URL(fileURLWithPath: path)) else {
-        fail("cannot open PDF: \(path)", 2)
+        fail("cannot open PDF: \(path)", .input)
     }
 
     var request = RecognizeDocumentsRequest()
@@ -101,12 +86,12 @@ func runStructure(_ args: [String]) async {
             let container = observations.first?.document
             pages.append(structuredPage(from: container, index: index, bounds: bounds))
         } catch {
-            fail("document recognition failed on page \(index): \(error)", 3)
+            fail("document recognition failed on page \(index): \(error)", .failure)
         }
     }
 
     printJSON(StructureResult(pageCount: document.pageCount, pages: pages))
-    exit(0)
+    exit(ExitCode.ok.rawValue)
 }
 
 private func structuredPage(
@@ -158,12 +143,6 @@ private func structuredPage(
     )
 }
 
-private func box(of region: NormalizedRegion, in bounds: CGRect) -> StructuredBox {
-    let rect = region.normalizedPath.boundingBox
-    return StructuredBox(
-        x: rect.minX * bounds.width,
-        y: rect.minY * bounds.height,
-        width: rect.width * bounds.width,
-        height: rect.height * bounds.height
-    )
+private func box(of region: NormalizedRegion, in bounds: CGRect) -> Box {
+    denormalize(region.normalizedPath.boundingBox, in: bounds)
 }
