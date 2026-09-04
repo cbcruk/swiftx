@@ -3,8 +3,7 @@
 macOS 프레임워크(Vision, PDFKit, Translation, …)를 감싼 Swift CLI들과, 그것을 Node에서
 쓰기 위한 브릿지를 한 곳에 모은 모노레포. 각 기능은 npm 패키지 형태로 묶여
 [GitHub 릴리스](https://github.com/cbcruk/swiftx/releases)에 올라가고,
-[vision-ocr](https://github.com/cbcruk/vision-ocr), [pdf-translator](https://github.com/cbcruk/pdf-translator)
-같은 소비 프로젝트가 URL로 설치해 바로 쓴다.
+[pdf-translator](https://github.com/cbcruk/pdf-translator) 같은 소비 프로젝트가 URL로 설치해 바로 쓴다.
 
 ## 설치
 
@@ -128,6 +127,7 @@ Swift 코드가 툴체인 없는 환경에서 작성되는 동안 쌓인 미검�
 - [x] **1단계** — 모노레포 스캐폴딩, `SwiftXKit`, `@cbcruk/swift-bridge`
 - [x] **2단계** — `pdf-cli` · `translate-cli` 이관(히스토리 보존), 래퍼 패키지, 배포 파이프라인
 - [x] **3단계** — vision-ocr을 CLI 방식으로 전환해 이관 (node-swift 경로 폐기)
-- [ ] 소비 프로젝트 전환 — pdf-translator, vision-ocr 리포
+- [x] **4단계** — 소비 프로젝트 전환. pdf-translator가 릴리스 tarball로 갈아탔고
+  ([#9](https://github.com/cbcruk/pdf-translator/pull/9)), 옛 vision-ocr 리포는 아카이브했다
 
 이관은 `git subtree`로 커밋 히스토리를 보존해 가져온다.

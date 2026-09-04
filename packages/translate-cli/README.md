@@ -5,9 +5,9 @@ macOS binary — no API key, no network, no Swift toolchain needed to install.
 
 Part of [swiftx](https://github.com/cbcruk/swiftx).
 
-```bash
-npm install @cbcruk/translate-cli
-```
+Install from a [release](https://github.com/cbcruk/swiftx/releases) tarball URL — the snippet is
+in the release notes and in the [root README](https://github.com/cbcruk/swiftx#설치). These packages
+are not published to the npm registry.
 
 Requires **macOS 26+**, Node 18+, and the language pair installed on the machine
 (System Settings → General → Language & Region → Translation Languages).

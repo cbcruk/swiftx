@@ -6,9 +6,9 @@ CLI, read JSON back, and turn a non-zero exit code into a typed error.
 It is a thin wiring layer with **no dependencies**, and it is not macOS-only itself — only the
 binaries it launches are.
 
-```bash
-npm install @cbcruk/swift-bridge
-```
+Install from a [release](https://github.com/cbcruk/swiftx/releases) tarball URL — the snippet is
+in the release notes and in the [root README](https://github.com/cbcruk/swiftx#설치). These packages
+are not published to the npm registry.
 
 ## Usage
 

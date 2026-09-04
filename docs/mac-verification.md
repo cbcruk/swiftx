@@ -182,4 +182,4 @@ OCR용 이미지(여러 줄·좁은 행간·투명 배경·표·2단)는 `NSImag
 ## 배경
 
 규약(JSON 출력, stderr 한 줄, 종료 코드)과 레이아웃은 [README](../README.md)에,
-번역 CLI의 설계 근거는 [swift/translate/README.md](../swift/translate/README.md)에 있다.
+각 Swift CLI의 설계 근거는 그 패키지의 README에 있다 — [translate](../swift/translate/README.md)(언어팩과 SwiftUI 우회), [vision](../swift/vision/README.md)(인식 옵션, 줄 병합, 투명 배경).
