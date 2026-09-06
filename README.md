@@ -13,26 +13,18 @@ macOS 프레임워크(Vision, PDFKit, Translation, …)를 감싼 Swift CLI들�
 ```json
 {
   "dependencies": {
-    "@cbcruk/swift-bridge": "https://github.com/cbcruk/swiftx/releases/download/<tag>/cbcruk-swift-bridge-0.1.0.tgz",
     "@cbcruk/vision-ocr": "https://github.com/cbcruk/swiftx/releases/download/<tag>/cbcruk-vision-ocr-2.0.0.tgz"
-  },
-  "pnpm": {
-    "overrides": {
-      "@cbcruk/swift-bridge": "https://github.com/cbcruk/swiftx/releases/download/<tag>/cbcruk-swift-bridge-0.1.0.tgz"
-    }
   }
 }
 ```
 
-`overrides`가 필요한 이유는 래퍼 패키지가 `@cbcruk/swift-bridge`를 `^0.1.0`으로 요구하는데
-그 이름이 npm 레지스트리에 없기 때문이다. 없으면 설치가 404로 죽는다. 이렇게 고정하면
-브릿지 사본이 하나로 모여서 `instanceof SwiftCliError`가 패키지 경계를 넘어서도 성립한다.
+브리지는 적지 않아도 된다. **`@cbcruk/swift-bridge`만 npm에 올라가 있어서** 래퍼가
+선언한 `^0.1.0`이 레지스트리에서 그대로 풀린다. 바이너리를 들고 다니지 않는 유일한
+패키지라 그럴 수 있고, 덕분에 소비 측에 `overrides` 같은 우회가 필요 없다.
 
-`dependencies`에도 브릿지를 넣는 건 다른 이유다. override만으로는 최상위 `node_modules`에
-노출되지 않아서 `SwiftCliError`를 직접 import할 수 없다. 오류를 종료 코드로 가르지 않는
-소비자는 이 줄을 빼도 된다.
-
-npm을 쓰는 소비자는 `pnpm.overrides` 대신 최상위 `overrides`에 같은 줄을 넣는다.
+`SwiftCliError`로 오류를 가르는 소비자만 `"@cbcruk/swift-bridge": "^0.1.0"`을
+`dependencies`에 함께 적는다 — 전이 의존성은 최상위 `node_modules`에 노출되지 않아
+직접 import할 수 없기 때문이다. 사본은 여전히 하나라 `instanceof`가 성립한다.
 
 ## 연결 방식
 

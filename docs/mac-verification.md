@@ -158,12 +158,12 @@ pnpm이 문법은 받아주지만 `bin/`과 `dist/`가 gitignore라 tarball에 �
   pack해서 그 태그의 GitHub 릴리스에 붙인다. npm에 올리지 않으므로 토큰 시크릿은 필요 없고,
   워크플로의 `contents: write` 권한으로 충분하다.
 - 첫 릴리스(`2026.09.03`)를 실제로 돌려 소비 측 설치까지 확인했다. 릴리스 URL로
-  네 패키지를 설치하고 OCR·PDF·번역이 모두 동작한다. `@cbcruk/swift-bridge`를
-  `overrides`로 고정해야 하고(없으면 `ERR_PNPM_FETCH_404` — 레지스트리에 없는 이름),
-  그러면 브릿지 사본이 하나로 모여 다른 패키지가 던진 오류에도
-  `instanceof SwiftCliError`가 성립한다.
-- `SwiftCliError`를 직접 import하려면 override와 별개로 `dependencies`에도 브릿지를
-  넣어야 한다. override는 해석만 바꿀 뿐 최상위 `node_modules`에 노출하지 않는다.
+  설치하고 OCR·PDF·번역이 모두 동작한다.
+- `@cbcruk/swift-bridge`는 **npm에 올라가 있다.** 래퍼가 선언한 `^0.1.0`이 레지스트리에서
+  풀리므로 소비 측에 `overrides`가 필요 없다. 브리지만 그럴 수 있는 이유는 바이너리를
+  들고 다니지 않고 플랫폼 잠금도 없어서다. 올리기 전에는 `ERR_PNPM_FETCH_404`가 났다.
+- `SwiftCliError`를 직접 import하려면 `dependencies`에 `^0.1.0`을 함께 적는다. 전이
+  의존성은 최상위 `node_modules`에 노출되지 않는다. 사본은 하나라 `instanceof`는 성립한다.
 - `@cbcruk/vision-ocr`은 **2.0.0**이다. 1.x는 node-swift 애드온이라 실행 모델이 다르다.
 
 ## 픽스처 만들기
