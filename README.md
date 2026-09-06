@@ -102,9 +102,14 @@ pnpm --filter @cbcruk/pdf-cli build:swift        # 유니버설 바이너리 →
 ```
 
 배포는 `Release` 워크플로(workflow_dispatch)에 태그를 주고 돌린다. macOS 러너에서
-바이너리를 만들고, `prepack`이 동봉 여부를 확인한 뒤 네 패키지를 한꺼번에 pack해서
+바이너리를 만들고, `prepack`이 동봉 여부를 확인한 뒤 래퍼 셋을 한꺼번에 pack해서
 그 태그의 GitHub 릴리스에 붙인다. 패키지끼리 물려 있어 따로 내보내면 버전이 어긋난다.
 릴리스 본문의 설치 스니펫은 `scripts/release-notes.mjs`가 만든다.
+
+브리지는 같은 워크플로가 npm에 올린다(`NPM_TOKEN` 시크릿). 레지스트리에 그 버전이
+이미 있으면 건너뛰므로, **브리지를 고쳤다면 `packages/swift-bridge/package.json`의
+버전을 먼저 올려야** 실제로 배포된다. 브리지 tarball은 릴리스에 붙이지 않는다 —
+소비 측이 그걸 걸면 레지스트리 사본과 둘이 되어 `instanceof SwiftCliError`가 깨진다.
 
 개발 중에는 `.build/`의 산출물이 패키지 동봉본보다 우선한다. 특정 바이너리를 강제하려면
 `SWIFTX_<NAME>_BIN`(예: `SWIFTX_PDF_CLI_BIN`)에 절대 경로를 준다.

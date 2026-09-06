@@ -1,7 +1,8 @@
 name: Release
 
-# npm이 아니라 GitHub 릴리스에 tarball을 붙인다. 소비 측은 URL로 설치하고,
-# 미리 빌드된 유니버설 바이너리를 그대로 받으므로 Swift 툴체인이 필요 없다.
+# 바이너리를 동봉하는 래퍼 셋은 GitHub 릴리스에 tarball로 붙이고, 브리지는 npm에
+# 올린다. 소비 측은 래퍼 URL만 적으면 되고, 래퍼가 선언한 브리지 범위는 레지스트리에서
+# 풀린다. 어느 쪽이든 미리 빌드된 바이너리라 Swift 툴체인이 필요 없다.
 on:
   workflow_dispatch:
     inputs:
@@ -24,6 +25,7 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+          registry-url: https://registry.npmjs.org
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
@@ -34,15 +36,30 @@ jobs:
           pnpm --filter @cbcruk/translate-cli build:swift
           pnpm --filter @cbcruk/vision-ocr build:swift
 
-      # prepack 훅이 패키지마다 동봉 바이너리 유무를 다시 확인한다.
-      # pnpm pack이 workspace: 의존성을 실제 버전 범위로 바꿔 쓴다.
+      # prepack 훅이 패키지마다 동봉 바이너리 유무를 확인하고, pnpm pack이 workspace:
+      # 의존성을 실제 버전 범위로 바꿔 쓴다. 브리지는 npm이 정본이라 여기서 빠진다 —
+      # tarball까지 붙어 있으면 소비 측이 그쪽을 걸 수 있고, 그러면 레지스트리 사본과
+      # 둘이 되어 instanceof SwiftCliError가 깨진다.
       - name: Pack
         run: |
           mkdir -p tarballs
-          for package in swift-bridge pdf-cli translate-cli vision-ocr; do
+          for package in pdf-cli translate-cli vision-ocr; do
             pnpm --filter "@cbcruk/${package}" pack --pack-destination "${PWD}/tarballs"
           done
           ls -l tarballs
+
+      # 같은 버전을 두 번 올리면 npm이 거절하므로, 없을 때만 올린다.
+      # 브리지를 고쳤다면 package.json의 버전을 먼저 올려야 이 단계가 실제로 배포한다.
+      - name: Publish swift-bridge to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          version=$(node -p "require('./packages/swift-bridge/package.json').version")
+          if npm view "@cbcruk/swift-bridge@${version}" version >/dev/null 2>&1; then
+            echo "@cbcruk/swift-bridge@${version} is already on npm — skipping"
+          else
+            pnpm --filter @cbcruk/swift-bridge publish --access public --no-git-checks
+          fi
 
       - name: Compose release notes
         run: |
