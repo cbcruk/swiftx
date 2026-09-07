@@ -45,7 +45,7 @@ macos-26에서 Swift. 로컬에서 놓쳐도 여기서 한 번 더 걸린다.
 
 ### A. stderr에서 CLI 자신의 줄 고르기
 
-CoreGraphics가 같은 stderr에 자기 진단을 먼저 흘려서 진짜 원인이 묻혔다. 이제 브릿지가
+CoreGraphics가 같은 stderr에 자기 진단을 먼저 흘려서 진짜 원인이 묻혔다. 이제 브리지가
 `<tool>: ` 접두사가 붙은 줄을 골라 쓴다.
 
 ```sh

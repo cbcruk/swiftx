@@ -1,42 +1,45 @@
 # swiftx
 
 macOS 프레임워크(Vision, PDFKit, Translation, …)를 감싼 Swift CLI들과, 그것을 Node에서
-쓰기 위한 브릿지를 한 곳에 모은 모노레포. 각 기능은 npm 패키지 형태로 묶여
+쓰기 위한 브리지를 한 곳에 모은 모노레포. 각 기능은 npm 패키지 형태로 묶여
 [GitHub 릴리스](https://github.com/cbcruk/swiftx/releases)에 올라가고,
 [pdf-translator](https://github.com/cbcruk/pdf-translator) 같은 소비 프로젝트가 URL로 설치해 바로 쓴다.
 
+Swift 코드는 **독립 실행 파일**로 빌드되고, Node는 그것을 spawn해 **JSON으로만** 대화한다.
+그렇게 정한 이유는 [설계 노트](docs/design.md#왜-in-process-애드온이-아니라-cli-스폰인가)에 있다.
+
+## 패키지
+
+호출 방법과 옵션은 패키지별 README에 있다.
+
+| 패키지 | 하는 일 | macOS |
+|---|---|---|
+| [`@cbcruk/vision-ocr`](packages/vision-ocr/README.md) | 이미지에서 텍스트 인식 (Vision) | 13+ |
+| [`@cbcruk/pdf-cli`](packages/pdf-cli/README.md) | PDF 텍스트 추출·구조 인식·리플로우 렌더 (PDFKit + Vision) | 26+ |
+| [`@cbcruk/translate-cli`](packages/translate-cli/README.md) | 온디바이스 번역 (Translation) | 26+ |
+| [`@cbcruk/swift-bridge`](packages/swift-bridge/README.md) | 위 셋이 공유하는 실행·JSON·오류 계층 | — |
+
 ## 설치
 
+**macOS 전용**(래퍼는 `os: ["darwin"]`이라 다른 플랫폼에서는 설치가 거절된다), **Node 18 이상**.
+바이너리를 실행하는 쪽이 macOS일 뿐이라 브리지 자체는 플랫폼을 가리지 않는다.
+
 릴리스에 붙은 tarball을 URL로 건다. 미리 빌드된 유니버설 바이너리가 들어 있어
-설치 시점에 Swift 툴체인이 필요 없다. 최신 URL은 릴리스 노트에 그대로 들어 있다.
+설치 시점에 Swift 툴체인이 필요 없다. 아래는 형태만 보여주는 예시고, 실제로 붙여 넣을
+URL은 릴리스 노트에 완성된 채로 들어 있다.
 
 ```json
 {
   "dependencies": {
-    "@cbcruk/vision-ocr": "https://github.com/cbcruk/swiftx/releases/download/<tag>/cbcruk-vision-ocr-2.0.0.tgz"
+    "@cbcruk/vision-ocr": "https://github.com/cbcruk/swiftx/releases/download/<tag>/cbcruk-vision-ocr-<version>.tgz"
   }
 }
 ```
 
-브리지는 적지 않아도 된다. **`@cbcruk/swift-bridge`만 npm에 올라가 있어서** 래퍼가
-선언한 `^0.1.0`이 레지스트리에서 그대로 풀린다. 바이너리를 들고 다니지 않는 유일한
-패키지라 그럴 수 있고, 덕분에 소비 측에 `overrides` 같은 우회가 필요 없다.
-
+브리지는 적지 않아도 된다 — 래퍼가 선언한 범위가 npm에서 그대로 풀린다.
 `SwiftCliError`로 오류를 가르는 소비자만 `"@cbcruk/swift-bridge": "^0.1.0"`을
-`dependencies`에 함께 적는다 — 전이 의존성은 최상위 `node_modules`에 노출되지 않아
-직접 import할 수 없기 때문이다. 사본은 여전히 하나라 `instanceof`가 성립한다.
-
-## 연결 방식
-
-Swift 코드는 **독립 실행 파일**로 빌드되고, Node는 그것을 spawn해서 **JSON으로만** 대화한다.
-in-process 네이티브 애드온(node-swift)을 쓰지 않는 이유:
-
-- 소비 프로젝트가 설치 시점에 Swift 툴체인을 갖출 필요가 없다 (미리 빌드된 바이너리를 동봉한다).
-- Node ABI/N-API 버전에 묶이지 않는다.
-- Vision/PDFKit이 죽어도 Node 프로세스는 살아남는다.
-- 실행 파일마다 macOS 하한을 따로 가질 수 있다 (아래 표).
-
-프로세스 스폰 비용(~10–30ms)은 OCR·번역 자체의 비용에 묻힌다.
+`dependencies`에 함께 적는다. 왜 브리지만 레지스트리에 있고 릴리스에는 없는지는
+[설계 노트](docs/design.md#왜-브리지만-npm에-올리나)를 본다.
 
 ## 규약
 
@@ -46,19 +49,13 @@ in-process 네이티브 애드온(node-swift)을 쓰지 않는 이유:
 | | 규약 |
 |---|---|
 | 성공 출력 | stdout에 한 줄짜리 JSON. 스트리밍이면 한 줄에 객체 하나(NDJSON) |
-| 진단 출력 | stderr에 `<tool>: <원인>` 한 줄. 브릿지가 **그 접두사가 붙은 줄**을 골라 에러 메시지로 쓴다 |
+| 진단 출력 | stderr에 `<tool>: <원인>` 한 줄. 브리지가 [그 접두사가 붙은 줄](docs/design.md#왜-stderr의-첫-줄이-아니라-접두사-붙은-줄인가)을 골라 에러 메시지로 쓴다 |
 | 종료 코드 | `0` 성공 · `1` 사용 오류 · `2` 입력 오류 · `3` 기능 사용 불가 · `4` 실행 실패 · `5`~ CLI 고유 |
 | 입력 | 파일 경로는 인자로, 대량 텍스트는 stdin으로 |
+| 응답 스키마 | 값이 없어도 [키가 존재한다](docs/design.md#왜-nullable-필드를-직접-인코딩하나) (`"title": null`) |
 
 종료 코드가 부족하면 각 CLI가 `ExitCode`에 자기 코드를 덧붙이고, Node 쪽에서
 `exitCodeMessages`로 사람이 읽을 메시지를 붙인다.
-
-접두사로 줄을 고르는 이유는 stderr가 우리 것만이 아니기 때문이다. 깨진 PDF를 열면
-CoreGraphics가 `CoreGraphics PDF has logged an error…`를 먼저 흘려서, "첫 줄"을 원인으로
-삼으면 진짜 원인이 묻힌다.
-
-응답 스키마의 필드는 값이 없어도 **키가 존재한다** (`title: null`). Swift의 `Optional`은
-기본 인코딩에서 키 자체를 생략하므로, nullable 필드는 직접 인코딩해 `null`을 내보낸다.
 
 ## 레이아웃
 
@@ -77,12 +74,15 @@ scripts/
   build-universal.sh   arm64+x86_64 유니버설 바이너리를 만들어 npm 패키지에 동봉
   check-bundled-binary.mjs  바이너리 없이 배포되는 사고를 막는 prepack 검사
   release-notes.mjs    릴리스 본문(설치 스니펫)을 tarball 목록에서 만들어 낸다
+docs/
+  design.md            지금 모양이 된 이유 (결정과 근거)
+  mac-verification.md  맥에서만 확인할 수 있는 것들의 체크리스트와 검증 기록
 ```
 
 ### macOS 하한
 
-SwiftPM의 `platforms:`는 패키지 단위라 하한이 섞이면 전체가 위로 끌려간다.
-그래서 Swift 패키지를 하나로 합치지 않고, 하한별로 나눠 `SwiftXKit`을 path로 참조한다.
+Swift 패키지는 하나로 합치지 않고 하한별로 나눠 `SwiftXKit`을 path로 참조한다
+([이유](docs/design.md#왜-swift-패키지를-하한별로-쪼갰나)).
 
 | Swift 패키지 | 하한 | 이유 |
 |---|---|---|
@@ -94,37 +94,30 @@ SwiftPM의 `platforms:`는 패키지 단위라 하한이 섞이면 전체가 위
 
 ```sh
 pnpm install
+pnpm build                   # 래퍼 TypeScript 컴파일
 pnpm typecheck
 pnpm test                    # Swift CLI 계약을 흉내내는 대역으로 래퍼까지 검증한다
 
 pnpm build:swift             # SwiftXKit 컴파일 확인 (macOS 필요)
+swift test --package-path swift/vision           # 줄 병합 등 Swift 단위 테스트 (macOS 필요)
 pnpm --filter @cbcruk/pdf-cli build:swift        # 유니버설 바이너리 → packages/pdf-cli/bin
 ```
 
-배포는 `Release` 워크플로(workflow_dispatch)에 태그를 주고 돌린다. macOS 러너에서
-바이너리를 만들고, `prepack`이 동봉 여부를 확인한 뒤 래퍼 셋을 한꺼번에 pack해서
-그 태그의 GitHub 릴리스에 붙인다. 패키지끼리 물려 있어 따로 내보내면 버전이 어긋난다.
-릴리스 본문의 설치 스니펫은 `scripts/release-notes.mjs`가 만든다.
+개발 중에는 `.build/`의 산출물이 패키지 동봉본보다 [우선한다](docs/design.md#왜-build-산출물이-동봉-바이너리보다-우선하나).
+특정 바이너리를 강제하려면 `SWIFTX_<NAME>_BIN`(예: `SWIFTX_PDF_CLI_BIN`)에 절대 경로를 준다.
 
-브리지는 같은 워크플로가 npm에 올린다(`NPM_TOKEN` 시크릿). 레지스트리에 그 버전이
-이미 있으면 건너뛰므로, **브리지를 고쳤다면 `packages/swift-bridge/package.json`의
-버전을 먼저 올려야** 실제로 배포된다. 브리지 tarball은 릴리스에 붙이지 않는다 —
-소비 측이 그걸 걸면 레지스트리 사본과 둘이 되어 `instanceof SwiftCliError`가 깨진다.
+### 배포
 
-개발 중에는 `.build/`의 산출물이 패키지 동봉본보다 우선한다. 특정 바이너리를 강제하려면
-`SWIFTX_<NAME>_BIN`(예: `SWIFTX_PDF_CLI_BIN`)에 절대 경로를 준다.
+`Release` 워크플로(workflow_dispatch)에 태그를 주고 돌린다. macOS 러너에서 바이너리를
+만들고, `prepack`이 동봉 여부를 확인한 뒤 래퍼 셋을 한꺼번에 pack해서 그 태그의 GitHub
+릴리스에 붙인다. 패키지끼리 물려 있어 따로 내보내면 버전이 어긋난다. 릴리스 본문의
+설치 스니펫은 `scripts/release-notes.mjs`가 만든다.
 
-## 맥에서 확인할 것
+브리지는 같은 워크플로가 npm에 올린다(`NPM_TOKEN` 시크릿). 레지스트리에 그 버전이 이미
+있으면 건너뛰므로, **브리지를 고쳤다면 `packages/swift-bridge/package.json`의 버전을 먼저
+올려야** 실제로 배포된다.
 
-Swift 코드가 툴체인 없는 환경에서 작성되는 동안 쌓인 미검증 항목과, 실제 문서로만
-확인할 수 있는 것들을 [docs/mac-verification.md](docs/mac-verification.md)에 모아 두었다.
+## 문서
 
-## 진행 상황
-
-- [x] **1단계** — 모노레포 스캐폴딩, `SwiftXKit`, `@cbcruk/swift-bridge`
-- [x] **2단계** — `pdf-cli` · `translate-cli` 이관(히스토리 보존), 래퍼 패키지, 배포 파이프라인
-- [x] **3단계** — vision-ocr을 CLI 방식으로 전환해 이관 (node-swift 경로 폐기)
-- [x] **4단계** — 소비 프로젝트 전환. pdf-translator가 릴리스 tarball로 갈아탔고
-  ([#9](https://github.com/cbcruk/pdf-translator/pull/9)), 옛 vision-ocr 리포는 아카이브했다
-
-이관은 `git subtree`로 커밋 히스토리를 보존해 가져온다.
+- [설계 노트](docs/design.md) — 왜 CLI 스폰인지, 왜 브리지만 npm인지 등 결정과 근거
+- [맥에서 확인할 것](docs/mac-verification.md) — 툴체인 없는 환경에서 쌓인 미검증 항목과 검증 기록
