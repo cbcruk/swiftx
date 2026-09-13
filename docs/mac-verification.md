@@ -154,10 +154,11 @@ tarball을 임시 디렉터리에 설치해 소비자 입장에서도 확인했�
 pnpm이 문법은 받아주지만 `bin/`과 `dist/`가 gitignore라 tarball에 없고, 채우려면
 소비 측에 Swift 툴체인을 요구하게 된다 — node-swift를 버린 이유가 다시 돌아온다.
 
-- 배포는 `Release` 워크플로(workflow_dispatch)에 태그를 주고 돌린다. 래퍼 셋을 한꺼번에
-  pack해서 그 태그의 GitHub 릴리스에 붙이고, 브리지는 npm에 올린다. 앞은 워크플로의
-  `contents: write` 권한으로, 뒤는 `NPM_TOKEN` 시크릿(granular token, `@cbcruk` 스코프
-  쓰기)으로 간다. 브리지는 같은 버전이 이미 있으면 건너뛰므로 버전을 먼저 올려야 한다.
+- 배포는 `Release` 워크플로(workflow_dispatch)에 태그를 주고 돌린다. 네 패키지를 브리지부터
+  npm에 올리고(`NPM_TOKEN` 시크릿, granular token, `@cbcruk` 스코프 쓰기), 그 태그로 GitHub
+  릴리스를 만든다(`contents: write`). 같은 버전이 이미 있으면 건너뛰므로 버전을 먼저 올려야 한다.
+- `2026.09.03` 이후로 래퍼도 npm에 올린다. 그 릴리스에 붙은 tarball URL은 남아 있지만
+  새 버전은 레지스트리로만 나간다.
 - 첫 릴리스(`2026.09.03`)를 실제로 돌려 소비 측 설치까지 확인했다. 릴리스 URL로
   설치하고 OCR·PDF·번역이 모두 동작한다.
 - `@cbcruk/swift-bridge`는 **npm에 올라가 있다.** 래퍼가 선언한 `^0.1.0`이 레지스트리에서

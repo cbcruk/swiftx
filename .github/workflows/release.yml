@@ -1,7 +1,7 @@
 name: Release
 
-# 바이너리를 동봉하는 래퍼 셋은 GitHub 릴리스에 tarball로 붙이고, 브리지는 npm에 올린다.
-# 그 갈래의 이유는 docs/design.md#왜-브리지만-npm에-올리나 에 있다.
+# 네 패키지를 npm에 올리고, 태그에 GitHub 릴리스를 만들어 그때의 버전을 남긴다.
+# 릴리스에 tarball을 붙이지 않는 이유: docs/design.md#왜-npm이-유일한-배포처인가
 on:
   workflow_dispatch:
     inputs:
@@ -35,41 +35,33 @@ jobs:
           pnpm --filter @cbcruk/translate-cli build:swift
           pnpm --filter @cbcruk/vision-ocr build:swift
 
-      # prepack 훅이 패키지마다 동봉 바이너리 유무를 확인하고, pnpm pack이 workspace:
-      # 의존성을 실제 버전 범위로 바꿔 쓴다. 브리지는 npm이 정본이라 여기서 빠진다.
-      - name: Pack
-        run: |
-          mkdir -p tarballs
-          for package in pdf-cli translate-cli vision-ocr; do
-            pnpm --filter "@cbcruk/${package}" pack --pack-destination "${PWD}/tarballs"
-          done
-          ls -l tarballs
-
+      # 브리지를 먼저 올려야 래퍼가 선언한 범위가 레지스트리에서 풀린다.
+      # prepack 훅이 래퍼마다 동봉 바이너리 유무를 확인하고, pnpm publish가 workspace:
+      # 의존성을 실제 버전 범위로 바꿔 쓴다.
       # 같은 버전을 두 번 올리면 npm이 거절하므로, 없을 때만 올린다.
-      # 브리지를 고쳤다면 package.json의 버전을 먼저 올려야 이 단계가 실제로 배포한다.
-      # 릴리스에 브리지 tarball을 붙이지 않는 이유: docs/design.md#왜-브리지만-npm에-올리나
-      - name: Publish swift-bridge to npm
+      # 패키지를 고쳤다면 그 package.json의 버전을 먼저 올려야 이 단계가 실제로 배포한다.
+      - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          version=$(node -p "require('./packages/swift-bridge/package.json').version")
-          if npm view "@cbcruk/swift-bridge@${version}" version >/dev/null 2>&1; then
-            echo "@cbcruk/swift-bridge@${version} is already on npm — skipping"
-          else
-            pnpm --filter @cbcruk/swift-bridge publish --access public --no-git-checks
-          fi
+          for package in swift-bridge pdf-cli translate-cli vision-ocr; do
+            version=$(node -p "require('./packages/${package}/package.json').version")
+            if npm view "@cbcruk/${package}@${version}" version >/dev/null 2>&1; then
+              echo "@cbcruk/${package}@${version} is already on npm — skipping"
+            else
+              pnpm --filter "@cbcruk/${package}" publish --access public --no-git-checks
+            fi
+          done
 
       - name: Compose release notes
         run: |
-          node scripts/release-notes.mjs tarballs \
-            "${{ github.server_url }}/${{ github.repository }}/releases/download/${{ inputs.tag }}" \
-            > release-notes.md
+          node scripts/release-notes.mjs > release-notes.md
 
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ inputs.tag }}" tarballs/*.tgz \
+          gh release create "${{ inputs.tag }}" \
             --target "${{ github.sha }}" \
             --title "${{ inputs.tag }}" \
             --notes-file release-notes.md

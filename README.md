@@ -1,9 +1,8 @@
 # swiftx
 
 macOS 프레임워크(Vision, PDFKit, Translation, …)를 감싼 Swift CLI들과, 그것을 Node에서
-쓰기 위한 브리지를 한 곳에 모은 모노레포. 각 기능은 npm 패키지 형태로 묶여
-[GitHub 릴리스](https://github.com/cbcruk/swiftx/releases)에 올라가고,
-[pdf-translator](https://github.com/cbcruk/pdf-translator) 같은 소비 프로젝트가 URL로 설치해 바로 쓴다.
+쓰기 위한 브리지를 한 곳에 모은 모노레포. 각 기능은 npm 패키지로 올라가고,
+[pdf-translator](https://github.com/cbcruk/pdf-translator) 같은 소비 프로젝트가 설치해 바로 쓴다.
 
 Swift 코드는 **독립 실행 파일**로 빌드되고, Node는 그것을 spawn해 **JSON으로만** 대화한다.
 그렇게 정한 이유는 [설계 노트](docs/design.md#왜-in-process-애드온이-아니라-cli-스폰인가)에 있다.
@@ -24,22 +23,17 @@ Swift 코드는 **독립 실행 파일**로 빌드되고, Node는 그것을 spaw
 **macOS 전용**(래퍼는 `os: ["darwin"]`이라 다른 플랫폼에서는 설치가 거절된다), **Node 18 이상**.
 바이너리를 실행하는 쪽이 macOS일 뿐이라 브리지 자체는 플랫폼을 가리지 않는다.
 
-릴리스에 붙은 tarball을 URL로 건다. 미리 빌드된 유니버설 바이너리가 들어 있어
-설치 시점에 Swift 툴체인이 필요 없다. 아래는 형태만 보여주는 예시고, 실제로 붙여 넣을
-URL은 릴리스 노트에 완성된 채로 들어 있다.
+필요한 래퍼만 골라 설치한다. 미리 빌드된 유니버설 바이너리가 들어 있어
+설치 시점에 Swift 툴체인이 필요 없다.
 
-```json
-{
-  "dependencies": {
-    "@cbcruk/vision-ocr": "https://github.com/cbcruk/swiftx/releases/download/<tag>/cbcruk-vision-ocr-<version>.tgz"
-  }
-}
+```sh
+pnpm add @cbcruk/vision-ocr
 ```
 
-브리지는 적지 않아도 된다 — 래퍼가 선언한 범위가 npm에서 그대로 풀린다.
+브리지는 적지 않아도 된다 — 래퍼가 선언한 범위가 그대로 풀린다.
 `SwiftCliError`로 오류를 가르는 소비자만 `"@cbcruk/swift-bridge": "^0.1.0"`을
-`dependencies`에 함께 적는다. 왜 브리지만 레지스트리에 있고 릴리스에는 없는지는
-[설계 노트](docs/design.md#왜-브리지만-npm에-올리나)를 본다.
+`dependencies`에 함께 적는다. 릴리스에 tarball이 없는 이유는
+[설계 노트](docs/design.md#왜-npm이-유일한-배포처인가)를 본다.
 
 ## 규약
 
@@ -73,7 +67,7 @@ packages/
 scripts/
   build-universal.sh   arm64+x86_64 유니버설 바이너리를 만들어 npm 패키지에 동봉
   check-bundled-binary.mjs  바이너리 없이 배포되는 사고를 막는 prepack 검사
-  release-notes.mjs    릴리스 본문(설치 스니펫)을 tarball 목록에서 만들어 낸다
+  release-notes.mjs    릴리스 본문(버전 표와 설치 명령)을 package.json에서 만들어 낸다
 docs/
   design.md            지금 모양이 된 이유 (결정과 근거)
   mac-verification.md  맥에서만 확인할 수 있는 것들의 체크리스트와 검증 기록
@@ -109,15 +103,14 @@ pnpm --filter @cbcruk/pdf-cli build:swift        # 유니버설 바이너리 →
 ### 배포
 
 `Release` 워크플로(workflow_dispatch)에 태그를 주고 돌린다. macOS 러너에서 바이너리를
-만들고, `prepack`이 동봉 여부를 확인한 뒤 래퍼 셋을 한꺼번에 pack해서 그 태그의 GitHub
-릴리스에 붙인다. 패키지끼리 물려 있어 따로 내보내면 버전이 어긋난다. 릴리스 본문의
-설치 스니펫은 `scripts/release-notes.mjs`가 만든다.
+만들고, 브리지 → 래퍼 셋 순서로 npm에 올린다(`NPM_TOKEN` 시크릿). 래퍼마다 `prepack`이
+동봉 바이너리 유무를 확인한다. 끝나면 그 태그로 GitHub 릴리스를 만들고, 본문의 버전 표와
+설치 명령은 `scripts/release-notes.mjs`가 만든다.
 
-브리지는 같은 워크플로가 npm에 올린다(`NPM_TOKEN` 시크릿). 레지스트리에 그 버전이 이미
-있으면 건너뛰므로, **브리지를 고쳤다면 `packages/swift-bridge/package.json`의 버전을 먼저
-올려야** 실제로 배포된다.
+레지스트리에 같은 버전이 이미 있는 패키지는 건너뛰므로, **패키지를 고쳤다면 그
+`package.json`의 버전을 먼저 올려야** 실제로 배포된다.
 
 ## 문서
 
-- [설계 노트](docs/design.md) — 왜 CLI 스폰인지, 왜 브리지만 npm인지 등 결정과 근거
+- [설계 노트](docs/design.md) — 왜 CLI 스폰인지, 왜 npm만 배포처인지 등 결정과 근거
 - [맥에서 확인할 것](docs/mac-verification.md) — 툴체인 없는 환경에서 쌓인 미검증 항목과 검증 기록

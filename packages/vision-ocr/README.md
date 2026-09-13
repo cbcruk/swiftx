@@ -5,11 +5,11 @@ Swift toolchain needed to install: the package ships a prebuilt binary.
 
 Part of [swiftx](https://github.com/cbcruk/swiftx).
 
-Install from a [release](https://github.com/cbcruk/swiftx/releases) tarball URL — the snippet is
-in the release notes and in the [root README](https://github.com/cbcruk/swiftx#설치). These packages
-are not published to the npm registry.
+```bash
+npm install @cbcruk/vision-ocr
+```
 
-> The `@cbcruk/vision-ocr` on npm is **1.0.3**, the old `node-swift` addon. It is not this package —
+> Versions 1.x on npm are the old `node-swift` addon. 2.0.0 is a different execution model —
 > see [Upgrading from 1.x](#upgrading-from-1x).
 
 Requires macOS 13+ and Node 18+.

@@ -10,10 +10,9 @@ binaries it launches are.
 npm install @cbcruk/swift-bridge
 ```
 
-This is the one swiftx package **on the npm registry**. It carries no binary and locks no
-platform, so it resolves like any other dependency — which is what lets the CLI wrappers declare
-it normally. Those wrappers ship prebuilt macOS binaries and are installed from
-[release](https://github.com/cbcruk/swiftx/releases) tarball URLs instead.
+It carries no binary and locks no platform, so it resolves like any other dependency. The CLI
+wrappers (`@cbcruk/pdf-cli`, `@cbcruk/translate-cli`, `@cbcruk/vision-ocr`) depend on it and
+bring it in transitively.
 
 ## Usage
 
